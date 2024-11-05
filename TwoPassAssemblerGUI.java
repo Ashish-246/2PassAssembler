@@ -1,8 +1,9 @@
-import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.*;
+import java.util.LinkedHashMap;
 
 class TwoPassAssemblerGUI extends JFrame {
 
@@ -13,96 +14,94 @@ class TwoPassAssemblerGUI extends JFrame {
 
     public TwoPassAssemblerGUI() {
         setTitle("Two-Pass Assembler");
-        setSize(1920, 1080);
+        setSize(1280, 720); // Adjusted for smaller screen size
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         mainPanel = createMainPanel();
         add(mainPanel);
 
-        // Show the main panel directly
         setVisible(true);
     }
 
     private JPanel createMainPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(null);
-        panel.setPreferredSize(new Dimension(1920, 1080));
+        panel.setPreferredSize(new Dimension(1280, 720));
 
-        Font font = new Font("Arial", Font.PLAIN, 16);
+        Font font = new Font("Arial", Font.PLAIN, 14);
         Color bgColor = new Color(245, 245, 245);
-        Color buttonColor = new Color(60, 179, 113); // New color for the assemble button
+        Color buttonColor = new Color(60, 179, 113);
 
         JLabel inputLabel = new JLabel("Input File:");
         inputLabel.setFont(font);
-        inputLabel.setBounds(50, 50, 120, 30);
+        inputLabel.setBounds(30, 30, 120, 25);
         panel.add(inputLabel);
 
         inputFileField = new JTextField(30);
-        inputFileField.setBounds(180, 50, 400, 30);
+        inputFileField.setBounds(150, 30, 400, 25);
         panel.add(inputFileField);
 
         JButton browseInputBtn = new JButton("Browse");
         browseInputBtn.setFont(font);
-        browseInputBtn.setBounds(600, 50, 120, 30);
+        browseInputBtn.setBounds(570, 30, 100, 25);
         browseInputBtn.addActionListener(e -> browseFile(inputFileField));
         panel.add(browseInputBtn);
 
         JLabel optabLabel = new JLabel("Optab File:");
         optabLabel.setFont(font);
-        optabLabel.setBounds(50, 100, 150, 30);
+        optabLabel.setBounds(30, 70, 120, 25);
         panel.add(optabLabel);
 
         optabFileField = new JTextField(30);
-        optabFileField.setBounds(180, 100, 400, 30);
+        optabFileField.setBounds(150, 70, 400, 25);
         panel.add(optabFileField);
 
         JButton browseOptabBtn = new JButton("Browse");
         browseOptabBtn.setFont(font);
-        browseOptabBtn.setBounds(600, 100, 120, 30);
+        browseOptabBtn.setBounds(570, 70, 100, 25);
         browseOptabBtn.addActionListener(e -> browseFile(optabFileField));
         panel.add(browseOptabBtn);
 
-        // Assemble button
         assembleBtn = new JButton("Assemble");
-        assembleBtn.setFont(new Font("Arial", Font.BOLD, 16));
+        assembleBtn.setFont(new Font("Arial", Font.BOLD, 14));
         assembleBtn.setBackground(buttonColor);
         assembleBtn.setForeground(Color.WHITE);
-        assembleBtn.setBounds(300, 150, 200, 40);
+        assembleBtn.setBounds(300, 110, 150, 30);
         assembleBtn.addActionListener(e -> runAssembler());
         panel.add(assembleBtn);
 
         JLabel intermediateLabel = new JLabel("Intermediate File Output:");
         intermediateLabel.setFont(font);
-        intermediateLabel.setBounds(800, 50, 250, 30);
+        intermediateLabel.setBounds(30, 150, 200, 25);
         panel.add(intermediateLabel);
 
         JLabel symtabLabel = new JLabel("SymTab Output:");
         symtabLabel.setFont(font);
-        symtabLabel.setBounds(1250, 50, 250, 30);
+        symtabLabel.setBounds(320, 150, 200, 25);
         panel.add(symtabLabel);
 
-        intermediateArea = new JTextArea(8, 70);
-        intermediateArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        intermediateArea = new JTextArea(10, 40);
+        intermediateArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane intermediateScroll = new JScrollPane(intermediateArea);
-        intermediateScroll.setBounds(800, 80, 375, 600);
+        intermediateScroll.setBounds(30, 180, 250, 400);
         panel.add(intermediateScroll);
 
-        symtabArea = new JTextArea(8, 70);
-        symtabArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        symtabArea = new JTextArea(10, 40);
+        symtabArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane symtabScroll = new JScrollPane(symtabArea);
-        symtabScroll.setBounds(1250, 80, 375, 600);
+        symtabScroll.setBounds(320, 180, 250, 400);
         panel.add(symtabScroll);
 
         JLabel outputLabel = new JLabel("Object Code Output:");
         outputLabel.setFont(font);
-        outputLabel.setBounds(800, 700, 250, 30);
+        outputLabel.setBounds(610, 150, 200, 25);
         panel.add(outputLabel);
 
-        outputArea = new JTextArea(7, 70);
-        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        outputArea = new JTextArea(10, 40);
+        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane outputScroll = new JScrollPane(outputArea);
-        outputScroll.setBounds(800, 740, 750, 200);
+        outputScroll.setBounds(610, 180, 300, 400);
         panel.add(outputScroll);
 
         panel.setBackground(bgColor);
@@ -136,10 +135,26 @@ class TwoPassAssemblerGUI extends JFrame {
                     assembler.loadOptab();
                     assembler.passOne();
                     assembler.passTwo();
+                    StringBuilder intermediateOutput = new StringBuilder();
+                    for (Map.Entry<Integer, String> entry : assembler.getIntermediateStart().entrySet()) {
+                        intermediateOutput.append(String.format("%04X  %s\n", entry.getKey(), entry.getValue()));
+                    }
+                    for (Map.Entry<Integer, String> entry : assembler.getIntermediate().entrySet()) {
+                        intermediateOutput.append(String.format("%04X  %s\n", entry.getKey(), entry.getValue()));
+                    }
+                    intermediateArea.setText(intermediateOutput.toString());
 
-                    displayFileContent("intermediate.txt", intermediateArea);
-                    displayFileContent("symtab.txt", symtabArea);
-                    displayFileContent("output.txt", outputArea);
+                    StringBuilder symbolTableOutputStr = new StringBuilder();
+                    for (Map.Entry<String, Integer> entry : assembler.getSymtab().entrySet()) {
+                        symbolTableOutputStr.append(String.format("%s\t%04X\n", entry.getKey(), entry.getValue()));
+                    }
+                    symtabArea.setText(symbolTableOutputStr.toString());
+
+                    StringBuilder objectCodeOutputStr = new StringBuilder();
+                    for (Map.Entry<Integer, String> entry : assembler.getObjectCode().entrySet()) {
+                        objectCodeOutputStr.append(entry.getValue()).append("\n");
+                    }
+                    outputArea.setText(objectCodeOutputStr.toString());
 
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(TwoPassAssemblerGUI.this, "Error running the assembler: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -167,13 +182,14 @@ class TwoPassAssemblerGUI extends JFrame {
     }
 }
 
-// The Assembler class that will run in the background
 class TwoPassAssembler {
-
-    private String inputFile;
-    private String optabFile;
-    private Map<String, String> optab = new HashMap<>();
-    private Map<String, Integer> symtab = new HashMap<>();
+    private final String inputFile;
+    private final String optabFile;
+    private final Map<String, String> optab = new HashMap<>();
+    private final Map<String, Integer> symtab = new LinkedHashMap<>();
+    private final Map<Integer, String> intermediate = new LinkedHashMap<>();
+    private final Map<Integer, String> intermediateStart = new LinkedHashMap<>();
+    private final Map<Integer, String> objectCode = new LinkedHashMap<>();
     private int locctr = 0;
     private int start = 0;
     private int length = 0;
@@ -183,7 +199,6 @@ class TwoPassAssembler {
         this.optabFile = optabFile;
     }
 
-    // Load the opcode table
     public void loadOptab() throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(optabFile));
         String line;
@@ -194,96 +209,162 @@ class TwoPassAssembler {
         reader.close();
     }
 
-    // First pass: generate symbol table and intermediate file
     public void passOne() throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-        BufferedWriter intermediateWriter = new BufferedWriter(new FileWriter("intermediate.txt"));
-        BufferedWriter symtabWriter = new BufferedWriter(new FileWriter("symtab.txt"));
-
         String line = reader.readLine();
         String[] parts = line.split("\\s+");
 
-        // Check if the first line has "START"
         if (parts[1].equals("START")) {
-            start = Integer.parseInt(parts[2]);
+            start = Integer.parseInt(parts[2], 16); // Parse start as hexadecimal
             locctr = start;
-            intermediateWriter.write("\t" + parts[0] + "\t" + parts[1] + "\t" + parts[2] + "\n");
+            intermediateStart.put(locctr, String.format("\t%s\t%s\t%s", parts[0], parts[1], parts[2]));
             line = reader.readLine();
         } else {
             locctr = 0;
         }
 
+        // Process each line
         while (line != null) {
             parts = line.split("\\s+");
             if (parts[1].equals("END")) break;
 
-            intermediateWriter.write(locctr + "\t" + parts[0] + "\t" + parts[1] + "\t" + parts[2] + "\n");
+            // Store intermediate with location counter in hex format
+            intermediate.put(locctr, String.format("\t%s\t%s\t%s", parts[0], parts[1], parts[2]));
 
+            // Insert into symbol table if label exists
             if (!parts[0].equals("-")) {
                 symtab.put(parts[0], locctr);
-                symtabWriter.write(parts[0] + "\t" + locctr + "\n");
             }
 
+            // Update locctr based on the opcode
             if (optab.containsKey(parts[1])) {
                 locctr += 3;
             } else if (parts[1].equals("WORD")) {
                 locctr += 3;
+            } else if (parts[1].equals("BYTE")) {
+                locctr += parts[2].length() - 3;
             } else if (parts[1].equals("RESW")) {
                 locctr += 3 * Integer.parseInt(parts[2]);
             } else if (parts[1].equals("RESB")) {
                 locctr += Integer.parseInt(parts[2]);
-            } else if (parts[1].equals("BYTE")) {
-                locctr += parts[2].length() - 3;
             }
 
             line = reader.readLine();
         }
 
-        intermediateWriter.write(locctr + "\t" + parts[0] + "\t" + parts[1] + "\t" + parts[2] + "\n");
-        symtabWriter.write(parts[0] + "\t" + locctr + "\n");
+        // Store final line in intermediate and calculate program length
+        intermediate.put(locctr, String.format("\t%s\t%s\t%s", parts[0], parts[1], parts[2]));
+        length = locctr - start;
 
         reader.close();
-        intermediateWriter.close();
-        symtabWriter.close();
     }
 
-    // Second pass: generate object code
-    public void passTwo() throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-        BufferedWriter outputWriter = new BufferedWriter(new FileWriter("output.txt"));
+    public void passTwo(){
+        String line;
+        String[] parts;
 
-        String line = reader.readLine();
-        String[] parts = line.split("\\s+");
+        String startLine = intermediateStart.get(start);
+        String[] startParts = startLine.trim().split("\\s+");
 
-        // Skip the first line
-        line = reader.readLine();
+        // Handle "START" directive
+        if (startParts[1].equals("START")) {
+            objectCode.put(0, "H^" + startParts[0] + "^" + String.format("%06X", start) + "^" + String.format("%06X", length));
+            //line = intermediate.get(start + 1);
+        } else {
+            objectCode.put(0, "H^" + " " + "^0000^" + String.format("%06X", length));
+        }
 
-        while (line != null) {
-            parts = line.split("\\s+");
-            if (parts[1].equals("END")) break;
+        StringBuilder textRecord1 = new StringBuilder();
+        StringBuilder textRecord2 = new StringBuilder();
+        int textStartAddr = 0;
+        int textLength = 0;
 
-            StringBuilder objectCode = new StringBuilder();
+        for (int loc : intermediate.keySet()) {
+
+            line = intermediate.get(loc);
+            parts = line.trim().split("\\s+");
+            if (parts.length < 3) continue;
+
+            if (parts[2].equals("END")) break;
+
+            if (textLength == 0) {
+                textStartAddr = loc;
+                textRecord1.append("T^").append(String.format("%06X", textStartAddr)).append("^");
+            }
+
+            // Generate object code for each line
             if (optab.containsKey(parts[1])) {
-                objectCode.append(optab.get(parts[1])).append("\t");
-                if (!parts[0].equals("-")) {
-                    objectCode.append(symtab.get(parts[0])).append("\t");
-                } else {
-                    objectCode.append("0\t");
+                String machineCode = optab.get(parts[1]);
+                int address = symtab.getOrDefault(parts[2], 0);
+                String code = machineCode + String.format("%04X", address);
+                textRecord2.append(code).append("^");
+                textLength += code.length() / 2;
+            } else if (parts[1].equals("WORD")) {
+                String wordCode = String.format("%06X", Integer.parseInt(parts[2]));
+                textRecord2.append(wordCode).append("^");
+                textLength += wordCode.length() / 2;
+            } else if (parts[1].equals("BYTE")) {
+                String byteCode = parts[2].substring(2, parts[2].length() - 1); // Extract value from BYTE literal
+                // bytecode to Ascii
+                StringBuilder asciiString = new StringBuilder();
+                for (int i = 0; i < byteCode.length(); i++) {
+                    int asciiValue = byteCode.charAt(i); // Convert each character to ASCII
+                    asciiString.append(asciiValue); // Append the ASCII value
                 }
+                textRecord2.append(String.format("%02X", Integer.parseInt(asciiString.toString()))).append("^");
+                textLength += byteCode.length() / 2;
+            } else if (parts[1].equals("RESW") || parts[1].equals("RESB")) {
+                // If we hit RESW/RESB, flush the current text record and start a new one after reserving memory
+                if (textLength > 0) {
+                    textRecord1.append(String.format("%02X", textLength)).append("^").append(textRecord2);
+                    objectCode.put(textStartAddr, textRecord1.toString());
+                    textRecord1 = new StringBuilder();
+                    textRecord2 = new StringBuilder();
+                    textLength = 0;
+                }
+                continue; // Do not generate object code for reserved space
             }
 
-            outputWriter.write(objectCode.toString().trim() + "\n");
-            line = reader.readLine();
+            if (textLength >= 30) { // Text records should not exceed 30 bytes (60 hex characters)
+                textRecord1.append(String.format("%02X", textLength)).append("^").append(textRecord2);
+                objectCode.put(textStartAddr, textRecord1.toString());
+                textRecord1 = new StringBuilder();
+                textRecord2 = new StringBuilder();
+                textLength = 0;
+            }
         }
 
-        reader.close();
-        outputWriter.close();
+        // Write remaining text record if not empty
+        if (textLength > 0) {
+            textRecord1.append(String.format("%02X", textLength)).append("^").append(textRecord2);
+            objectCode.put(textStartAddr, textRecord1.toString());
+        }
+
+        // Write End record
+        objectCode.put(locctr, "E^" + String.format("%06X", start));
     }
+
+
+    public Map<Integer, String> getIntermediate() {
+        return intermediate;
+    }
+
+    public Map<Integer, String> getIntermediateStart() {
+        return intermediateStart;
+    }
+
+    public Map<String, Integer> getSymtab() {
+        return symtab;
+    }
+
+    public Map<Integer, String> getObjectCode() {
+        return objectCode;
+    }
+
 }
 
-// Main class to run the application
 class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new TwoPassAssemblerGUI());
+        SwingUtilities.invokeLater(TwoPassAssemblerGUI::new);
     }
 }
